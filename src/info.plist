@@ -268,8 +268,8 @@ def populate_menu(alfreditems, title, *password_args):
         return True
     return False
 
-passwords = [["Alfanumeric password", "-snc"],
-             ["Alfanumeric password with special characters", "-sncy"],
+passwords = [["Alphanumeric password", "-snc"],
+             ["Alphanumeric password with special characters", "-sncy"],
              ["Numeric password", "-A", "--remove-chars", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"]]
 
 if reduce((lambda x, y: x and y), map(lambda x: populate_menu(alfreditems, *x), passwords)) == False:
