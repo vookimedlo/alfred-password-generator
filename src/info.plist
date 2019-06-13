@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>bundleid</key>
+	<string>cz.vookimedlo.alfred.passwd.gen</string>
+	<key>category</key>
+	<string>Tools</string>
+	<key>connections</key>
+	<dict>
+		<key>4704A59A-7CAB-4BD2-90EA-5F0CCC1BBADB</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>EA22D738-5B5A-4E57-8998-ADA391F4235F</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+			<dict>
+				<key>destinationuid</key>
+				<string>5327228E-C109-4B13-AC01-2473C10162B7</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+			<dict>
+				<key>destinationuid</key>
+				<string>C97E33FF-6234-4471-8315-F616AE31885F</string>
+				<key>modifiers</key>
+				<integer>1048576</integer>
+				<key>modifiersubtext</key>
+				<string>Show password using Large Type</string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>5327228E-C109-4B13-AC01-2473C10162B7</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>5072C58B-776A-43E9-9600-48163F8B175F</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>C97E33FF-6234-4471-8315-F616AE31885F</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>5327228E-C109-4B13-AC01-2473C10162B7</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>EA22D738-5B5A-4E57-8998-ADA391F4235F</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>52B662C2-EBEC-481B-8CA3-8B5661A76123</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+	</dict>
+	<key>createdby</key>
+	<string>Michal Duda</string>
+	<key>description</key>
+	<string>Yet another Alfred 4 workflow for generating passwords.</string>
+	<key>disabled</key>
+	<false/>
+	<key>name</key>
+	<string>PasswordGenerator</string>
+	<key>objects</key>
+	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>0</integer>
+				<key>script</key>
+				<string>readonly latestTag=`curl -s https://api.github.com/repos/vookimedlo/alfred-password-generator/releases/latest | grep browser_download_url | grep PasswordGenerator.alfredworkflow | cut -d '/' -f 8`
+
+# THESE VARIABLES MUST BE SET. SEE THE ONEUPDATER README FOR AN EXPLANATION OF EACH.
+readonly remote_info_plist="https://raw.githubusercontent.com/vookimedlo/alfred-password-generator/${latestTag}/src/info.plist"
+readonly workflow_url=`curl -s https://api.github.com/repos/vookimedlo/alfred-password-generator/releases/latest | grep browser_download_url | grep PasswordGenerator.alfredworkflow | cut -d '"' -f 4`
+readonly download_type='direct'
+readonly frequency_check='4'
+
+# FROM HERE ON, CODE SHOULD BE LEFT UNTOUCHED!
+function abort {
+  echo "${1}" &gt;&amp;2
+  exit 1
+}
+
+function url_exists {
+  curl --silent --location --output /dev/null --fail --range 0-0 "${1}"
+}
+
+function notification {
+  readonly local notificator="$(find . -type d -name 'Notificator.app')"
+  if [[ -n "${notificator}" ]]; then
+    "${notificator}/Contents/Resources/Scripts/notificator" --message "${1}" --title "${alfred_workflow_name}" --subtitle 'A new version is available'
+    return
+  fi
+
+  readonly local terminal_notifier="$(find . -type f -name 'terminal-notifier')"
+  if [[ -n "${terminal_notifier}" ]]; then
+    "${terminal_notifier}" -title "${alfred_workflow_name}" -subtitle 'A new version is available' -message "${1}"
+    return
+  fi
+
+  osascript -e "display notification \"${1}\" with title \"${alfred_workflow_name}\" subtitle \"A new version is available\""
+}
+
+# Local sanity checks
+readonly local_info_plist='info.plist'
+readonly local_version="$(/usr/libexec/PlistBuddy -c 'print version' "${local_info_plist}")"
+
+[[ -n "${local_version}" ]] || abort 'You need to set a workflow version in the configuration sheet.'
+[[ "${download_type}" =~ ^(direct|page|github_release)$ ]] || abort "'download_type' (${download_type}) needs to be one of 'direct', 'page', or 'github_release'."
+[[ "${frequency_check}" =~ ^[0-9]+$ ]] || abort "'frequency_check' (${frequency_check}) needs to be a number."
+
+# Check for updates
+if [[ $(find "${local_info_plist}" -mtime +"${frequency_check}"d) ]]; then
+  if ! url_exists "${remote_info_plist}"; then abort "'remote_info_plist' (${remote_info_plist}) appears to not be reachable."; fi # Remote sanity check
+
+  readonly tmp_file="$(mktemp)"
+  curl --silent --location --output "${tmp_file}" "${remote_info_plist}"
+  readonly remote_version="$(/usr/libexec/PlistBuddy -c 'print version' "${tmp_file}")"
+
+  if [[ "${local_version}" == "${remote_version}" ]]; then
+    touch "${local_info_plist}" # Reset timer by touching local file
+    exit 0
+  fi
+
+  if [[ "${download_type}" == 'page' ]]; then
+    notification 'Opening download page…'
+    open "${workflow_url}"
+    exit 0
+  fi
+
+  download_url="$([[ "${download_type}" == 'github_release' ]] &amp;&amp; curl --silent "https://api.github.com/repos/${workflow_url}/releases/latest" | grep 'browser_download_url' | head -1 | sed -E 's/.*browser_download_url": "(.*)"/\1/' || echo "${workflow_url}")"
+
+  if url_exists "${download_url}"; then
+    notification 'Downloading and installing…'
+    curl --silent --location --output "${HOME}/Downloads/${alfred_workflow_name}.alfredworkflow" "${download_url}"
+    open "${HOME}/Downloads/${alfred_workflow_name}.alfredworkflow"
+  else
+    abort "'workflow_url' (${download_url}) appears to not be reachable."
+  fi
+fi</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>52B662C2-EBEC-481B-8CA3-8B5661A76123</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>matchmode</key>
+				<integer>1</integer>
+				<key>matchstring</key>
+				<string>.+</string>
+				<key>regexcaseinsensitive</key>
+				<false/>
+				<key>regexmultiline</key>
+				<false/>
+				<key>replacestring</key>
+				<string></string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.utility.replace</string>
+			<key>uid</key>
+			<string>EA22D738-5B5A-4E57-8998-ADA391F4235F</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>alfredfiltersresults</key>
+				<false/>
+				<key>alfredfiltersresultsmatchmode</key>
+				<integer>0</integer>
+				<key>argumenttreatemptyqueryasnil</key>
+				<true/>
+				<key>argumenttrimmode</key>
+				<integer>0</integer>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>escaping</key>
+				<integer>68</integer>
+				<key>keyword</key>
+				<string>{var:keyword}</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<true/>
+				<key>queuedelaymode</key>
+				<integer>0</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
+				<key>runningsubtext</key>
+				<string>Passwords are being generated ...</string>
+				<key>script</key>
+				<string>#!/usr/bin/python
+
+import json
+import os
+import sys
+from subprocess import Popen, PIPE
+length = "{query}"
+#length = "10"
+alfreditems = {"items": []}
+
+def generate_password(*args):
+    arguments = ["/usr/local/bin/pwgen"] + list(args) + [length, "1"]
+    process = Popen(arguments, stdout=PIPE)
+    (output, err) = process.communicate()
+    exitCode = process.wait()
+    return (exitCode, output, err)
+
+def create_alfred_item(alfreditems, uid, title, subtitle, autocomplete, arg):
+    alfreditems['items'].append({
+        "uid": uid,
+        "title": title,
+        "subtitle": subtitle,
+        "autocomplete": autocomplete,
+        "arg": arg,
+        })
+
+def populate_menu(alfreditems, title, *password_args):
+    (exitCode, output, err) = generate_password(*password_args)
+
+    if exitCode == 0:
+        output = output.replace('\n', '')
+        create_alfred_item(alfreditems, title, title, output, title, output)
+        return True
+    return False
+
+passwords = [["Alfanumeric password", "-snc"],
+             ["Alfanumeric password with special characters", "-sncy"],
+             ["Numeric password", "-A", "--remove-chars", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"]]
+
+if reduce((lambda x, y: x and y), map(lambda x: populate_menu(alfreditems, *x), passwords)) == False:
+    alfreditems = {"items": []}
+    create_alfred_item(alfreditems, 1, "Password Generator", "Failure! Cannot generate a password!", "", "")
+
+dump = json.dumps({'items': alfreditems['items']}, indent=4)
+sys.stdout.write(dump)
+</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>subtext</key>
+				<string>generates password in various forms</string>
+				<key>title</key>
+				<string>Password Generator</string>
+				<key>type</key>
+				<integer>3</integer>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>4704A59A-7CAB-4BD2-90EA-5F0CCC1BBADB</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>autopaste</key>
+				<false/>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>transient</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>5327228E-C109-4B13-AC01-2473C10162B7</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<false/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>... using the transient mode</string>
+				<key>title</key>
+				<string>Password was copied to clipboard!</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>5072C58B-776A-43E9-9600-48163F8B175F</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>alignment</key>
+				<integer>0</integer>
+				<key>backgroundcolor</key>
+				<string></string>
+				<key>fadespeed</key>
+				<integer>0</integer>
+				<key>fillmode</key>
+				<integer>0</integer>
+				<key>font</key>
+				<string></string>
+				<key>largetypetext</key>
+				<string>{query}</string>
+				<key>textcolor</key>
+				<string></string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.largetype</string>
+			<key>uid</key>
+			<string>C97E33FF-6234-4471-8315-F616AE31885F</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+	</array>
+	<key>readme</key>
+	<string>See https://github.com/vookimedlo/alfred-password-generator</string>
+	<key>uidata</key>
+	<dict>
+		<key>4704A59A-7CAB-4BD2-90EA-5F0CCC1BBADB</key>
+		<dict>
+			<key>colorindex</key>
+			<integer>4</integer>
+			<key>note</key>
+			<string>PasswordGenerator</string>
+			<key>xpos</key>
+			<integer>85</integer>
+			<key>ypos</key>
+			<integer>205</integer>
+		</dict>
+		<key>5072C58B-776A-43E9-9600-48163F8B175F</key>
+		<dict>
+			<key>colorindex</key>
+			<integer>4</integer>
+			<key>note</key>
+			<string>Notifies user about pssword availability in clipboard</string>
+			<key>xpos</key>
+			<integer>885</integer>
+			<key>ypos</key>
+			<integer>205</integer>
+		</dict>
+		<key>52B662C2-EBEC-481B-8CA3-8B5661A76123</key>
+		<dict>
+			<key>colorindex</key>
+			<integer>12</integer>
+			<key>note</key>
+			<string>OneUpdater</string>
+			<key>xpos</key>
+			<integer>665</integer>
+			<key>ypos</key>
+			<integer>30</integer>
+		</dict>
+		<key>5327228E-C109-4B13-AC01-2473C10162B7</key>
+		<dict>
+			<key>colorindex</key>
+			<integer>4</integer>
+			<key>note</key>
+			<string>Copies generated password to clipboard in a transient mode</string>
+			<key>xpos</key>
+			<integer>665</integer>
+			<key>ypos</key>
+			<integer>205</integer>
+		</dict>
+		<key>C97E33FF-6234-4471-8315-F616AE31885F</key>
+		<dict>
+			<key>colorindex</key>
+			<integer>4</integer>
+			<key>note</key>
+			<string>Shows generated password using Large Type</string>
+			<key>xpos</key>
+			<integer>480</integer>
+			<key>ypos</key>
+			<integer>385</integer>
+		</dict>
+		<key>EA22D738-5B5A-4E57-8998-ADA391F4235F</key>
+		<dict>
+			<key>colorindex</key>
+			<integer>1</integer>
+			<key>note</key>
+			<string>Do not pass any passwords to OneUpdater</string>
+			<key>xpos</key>
+			<integer>520</integer>
+			<key>ypos</key>
+			<integer>60</integer>
+		</dict>
+	</dict>
+	<key>variables</key>
+	<dict>
+		<key>keyword</key>
+		<string>passwd</string>
+	</dict>
+	<key>variablesdontexport</key>
+	<array/>
+	<key>version</key>
+	<string>2019.06.13</string>
+	<key>webaddress</key>
+	<string>https://github.com/vookimedlo/alfred-password-generator</string>
+</dict>
+</plist>
