@@ -25,7 +25,7 @@ Three different passwords will be generated.
 Select the one you would like to use and press <kbd>Enter</kbd>. Password will be copied to the cipboard in a transient mode, which means,
 that password will not be saved in the clipboard history.
 
-Before selection, you can also press <kbd>⌘<kbd> to additionally show the selected password using the Alfred Large Type.
+Before selection, you can also press <kbd>⌘</kbd> to additionally show the selected password using the Alfred Large Type.
 
 ![Alfred actions submenu screenshot](doc/images/alfred-password-generator-large-type.png?raw=true "")
 
