@@ -244,7 +244,7 @@ length = "{query}"
 alfreditems = {"items": []}
 
 def generate_password(*args):
-    arguments = ["/usr/local/bin/pwgen"] + list(args) + [length, "1"]
+    arguments = ["/opt/homebrew/bin/pwgen"] + list(args) + [length, "1"]
     process = Popen(arguments, stdout=PIPE)
     (output, err) = process.communicate()
     exitCode = process.wait()
@@ -280,15 +280,15 @@ dump = json.dumps({'items': alfreditems['items']}, indent=4)
 sys.stdout.write(dump)
 </string>
 				<key>scriptargtype</key>
-				<integer>0</integer>
+				<integer>1</integer>
 				<key>scriptfile</key>
-				<string></string>
+				<string>pwdgen.py</string>
 				<key>subtext</key>
 				<string>generates password in various forms</string>
 				<key>title</key>
 				<string>Password Generator</string>
 				<key>type</key>
-				<integer>3</integer>
+				<integer>8</integer>
 				<key>withspace</key>
 				<true/>
 			</dict>
@@ -306,8 +306,10 @@ sys.stdout.write(dump)
 				<false/>
 				<key>clipboardtext</key>
 				<string>{query}</string>
+				<key>ignoredynamicplaceholders</key>
+				<false/>
 				<key>transient</key>
-				<true/>
+				<false/>
 			</dict>
 			<key>type</key>
 			<string>alfred.workflow.output.clipboard</string>
@@ -350,10 +352,14 @@ sys.stdout.write(dump)
 				<integer>0</integer>
 				<key>font</key>
 				<string></string>
+				<key>ignoredynamicplaceholders</key>
+				<false/>
 				<key>largetypetext</key>
 				<string>{query}</string>
 				<key>textcolor</key>
 				<string></string>
+				<key>wrapat</key>
+				<integer>50</integer>
 			</dict>
 			<key>type</key>
 			<string>alfred.workflow.output.largetype</string>
@@ -442,7 +448,7 @@ sys.stdout.write(dump)
 	<key>variablesdontexport</key>
 	<array/>
 	<key>version</key>
-	<string>2019.06.13</string>
+	<string>2022.02.20</string>
 	<key>webaddress</key>
 	<string>https://github.com/vookimedlo/alfred-password-generator</string>
 </dict>

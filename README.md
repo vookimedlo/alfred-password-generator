@@ -5,10 +5,12 @@ Yet another [Alfred 4][1] workflow for generating passwords.
 
 1) Install the [pwgen][2] to your MacOS.
 
-   - You could do it for example by using [Homebrew][3] and installing [pwgen package.][4]
+   - You could do it for example by using [Homebrew][3] and installing [pwgen package.][3]
    - ````brew install pwgen````
 2) Install [alfred-password-generator workflow.][5]
 3) All further updates are handled automatically.
+4) Requires a _python3_ interpreter to be installed via a [Homebrew][4].
+
 
 ## Usage
 
@@ -22,8 +24,7 @@ Three different passwords will be generated.
 - Alphanumeric password
 - Numeric password
 
-Select the one you would like to use and press <kbd>Enter</kbd>. Password will be copied to the cipboard in a transient mode, which means,
-that password will not be saved in the clipboard history.
+Select the one you would like to use and press <kbd>Enter</kbd>. Password will be copied to the clipboard.
 
 Before selection, you can also press <kbd>⌘</kbd> to additionally show the selected password using the Alfred Large Type.
 
