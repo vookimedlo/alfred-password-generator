@@ -30,7 +30,7 @@ def populate_menu(alfreditems, title, *password_args):
     (exitCode, output, err) = generate_password(*password_args)
 
     if exitCode == 0:
-        output = str(bytes(output).replace(b'\n', b''))
+        output = (bytes(output).replace(b'\n', b'')).decode("utf-8")
         create_alfred_item(alfreditems, title, title, output, title, output)
         return True
     return False
